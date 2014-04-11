@@ -83,6 +83,7 @@ angular.module('dateParser', [])
                     return val;
                 }
 
+
                 try {
                     val = val + '';
                     format = format + '';
@@ -109,7 +110,8 @@ angular.module('dateParser', [])
                         ss = 0,
                         ampm = 'am',
                         now = new Date(),
-                        z = now.getTimezoneOffset() * -1;
+                        z = 0,
+                        parsedZ = false;
 
                     // TODO: Extract this into a helper function perhaps?
                     while (i_format < format.length) {
@@ -267,8 +269,9 @@ angular.module('dateParser', [])
                         } else if (token == 'Z') {
                             var tzStr = val.substring(i_val, i_val + 5);
 
-                            z = (parseInt(tzStr.substr(0, 3)) * 60) + parseInt(tzStr.substr(3, 2));
-
+        
+                        z = (parseInt(tzStr.substr(0, 3)) * 60) + parseInt(tzStr.substr(3, 2));
+                                parsedZ = true;
                             if (z > 720 || z < -720) {
                                 throw 'Invalid timezone';
                             }
@@ -324,13 +327,17 @@ angular.module('dateParser', [])
                     }
 
                     var localDate = new Date(year, month - 1, date, hh, mm, ss);
-
-                    return new Date(localDate.getTime() + (z + localDate.getTimezoneOffset()) * 60 * 1000);
+                    if (parsedZ) {
+                        return new Date(localDate.getTime() + (z + localDate.getTimezoneOffset()) * 60 * 1000);
+                    } else {
+                        return localDate;
+                    }
                 } catch(e) {
                     // TODO: Return undefined?
                     return new Date(undefined);
                 }
             };
+
 
             res.updateFromLocale = function() {
                 setFormat();
@@ -338,4 +345,5 @@ angular.module('dateParser', [])
 
             return res;
         }];
+
     }]);
