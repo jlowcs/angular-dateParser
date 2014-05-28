@@ -348,7 +348,7 @@ angular.module('dateParser', [])
 
                     var localDate = new Date(year, month - 1, date, hh, mm, ss);
                     if (parsedZ) {
-                        return new Date(localDate.getTime() + (z + localDate.getTimezoneOffset()) * 60 * 1000);
+                        return new Date(localDate.getTime() - (z + localDate.getTimezoneOffset()) * 60 * 1000);
                     } else {
                         return localDate;
                     }
