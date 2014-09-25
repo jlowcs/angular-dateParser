@@ -1,4 +1,4 @@
-/* 
+/*
  *   Angular DateParser 1.0.5
  *   https://github.com/dnasir/angular-dateParser
  *
@@ -55,11 +55,13 @@ angular.module('dateParser', [])
         this.$get = ['$locale', 'dateParserHelpers', '$rootScope', function($locale, dateParserHelpers, $rootScope) {
             var datetimeFormats,
                 monthNames,
+                ampms,
                 dayNames;
 
             var updateFromLocale = function() {
                 // Fetch date and time formats from $locale service
                 datetimeFormats = $locale.DATETIME_FORMATS;
+                ampms = datetimeFormats.AMPMS || ['AM', 'PM'];
 
                 // Build array of month and day names
                 monthNames = datetimeFormats.MONTH.concat(datetimeFormats.SHORTMONTH);
@@ -257,9 +259,9 @@ angular.module('dateParser', [])
 
                             i_val += ss.length;
                         } else if (token == 'a') {
-                            if (val.substring(i_val, i_val + 2).toLowerCase() == 'am') {
+                            if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[0]) {
                                 ampm = 'AM';
-                            } else if (val.substring(i_val, i_val + 2).toLowerCase() == 'pm') {
+                            } else if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[1]) {
                                 ampm = 'PM';
                             } else {
                                 throw 'Invalid AM/PM';
