@@ -259,16 +259,15 @@ angular.module('dateParser', [])
 
                             i_val += ss.length;
                         } else if (token == 'a') {
-                            if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[0]) {
+                            if (val.substring(i_val, i_val + ampms[0].length).toLowerCase() == ampms[0].toLowerCase()) {
                                 ampm = 'AM';
-                            } else if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[1]) {
+                                i_val += ampms[0].length;
+                            } else if (val.substring(i_val, i_val + ampms[1].length).toLowerCase() == ampms[1].toLowerCase()) {
                                 ampm = 'PM';
+                                i_val += ampms[1].length;
                             } else {
                                 throw 'Invalid AM/PM';
                             }
-
-
-                         i_val +=2;
                         } else if (token == 'Z') {
                             parsedZ = true;
 
