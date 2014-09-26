@@ -36,6 +36,10 @@ angular.module('dateParser', [])
                     }
                 }
                 return null;
+            },
+
+            setParsingInfo: function(parsingInfo, name, str, i_val, length, value) {
+                parsingInfo[name] = {start: i_val, end: i_val + length, parsedValue: str.substring(i_val, length), value: value};
             }
         };
     }])
@@ -78,7 +82,7 @@ angular.module('dateParser', [])
                 });
             }
 
-            var res = function(val, format) {
+            var res = function(val, format, returnParsingInfo) {
 
                 // If input is a Date object, there's no need to process it
                 if(angular.isDate(val)) {
@@ -113,7 +117,8 @@ angular.module('dateParser', [])
                         ampm = 'am',
                         now = new Date(),
                         z = 0,
-                        parsedZ = false;
+                        parsedZ = false,
+                        parsingInfo = {};
 
                     // TODO: Extract this into a helper function perhaps?
                     while (i_format < format.length) {
@@ -171,6 +176,8 @@ angular.module('dateParser', [])
                                 throw 'Invalid year';
                             }
 
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "year", val, i_val, year.length, parseInt(year, 10));
+
                             i_val += year.length;
 
                             if (year.length == 2) {
@@ -192,6 +199,8 @@ angular.module('dateParser', [])
                                         month -= 12;
                                     }
 
+                                    returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "month", val, i_val, month_name.length, parseInt(month, 10) - 1);
+
                                     i_val += month_name.length;
 
                                     break;
@@ -206,6 +215,7 @@ angular.module('dateParser', [])
                                 var day_name = dayNames[j];
 
                                 if (val.substring(i_val, i_val + day_name.length).toLowerCase() == day_name.toLowerCase()) {
+                                    returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "day", val, i_val, day_name.length, day_name);
                                     i_val += day_name.length;
                                     break;
                                 }
@@ -217,6 +227,8 @@ angular.module('dateParser', [])
                                 throw 'Invalid month';
                             }
 
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "month", val, i_val, month.length, parseInt(month, 10) - 1);
+
                             i_val += month.length;
                         } else if (token == 'dd' || token == 'd') {
                             date = dateParserHelpers.getInteger(val, i_val, token.length, 2);
@@ -224,6 +236,8 @@ angular.module('dateParser', [])
                             if (date === null || (date < 1) || (date > 31)) {
                                 throw 'Invalid date';
                             }
+
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "date", val, i_val, date.length, parseInt(date, 10));
 
                             i_val += date.length;
                         } else if (token == 'HH' || token == 'H') {
@@ -233,6 +247,8 @@ angular.module('dateParser', [])
                                 throw 'Invalid hours';
                             }
 
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "hours", val, i_val, hh.length, parseInt(hh, 10));
+
                             i_val += hh.length;
                         } else if (token == 'hh' || token == 'h') {
                             hh = dateParserHelpers.getInteger(val, i_val, token.length, 2);
@@ -240,6 +256,8 @@ angular.module('dateParser', [])
                             if (hh === null || (hh < 1) || (hh > 12)) {
                                 throw 'Invalid hours';
                             }
+
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "hours", val, i_val, hh.length, parseInt(hh, 10));
 
                             i_val += hh.length;
                         } else if (token == 'mm' || token == 'm') {
@@ -249,6 +267,8 @@ angular.module('dateParser', [])
                                 throw 'Invalid minutes';
                             }
 
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "minutes", val, i_val, mm.length, parseInt(mm, 10));
+
                             i_val += mm.length;
                         } else if (token == 'ss' || token == 's') {
                             ss = dateParserHelpers.getInteger(val, i_val, token.length, 2);
@@ -257,23 +277,28 @@ angular.module('dateParser', [])
                                 throw 'Invalid seconds';
                             }
 
+                            returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "seconds", val, i_val, ss.length, parseInt(ss, 10));
+
                             i_val += ss.length;
                         } else if (token == 'a') {
-                            if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[0]) {
+                            if (val.substring(i_val, i_val + ampms[0].length).toLowerCase() == ampms[0].toLowerCase()) {
                                 ampm = 'AM';
-                            } else if (val.substring(i_val, i_val + 2).toUpperCase() == ampms[1]) {
+                                returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "ampm", val, i_val, ampms[0].length, ampm);
+                                i_val += ampms[0].length;
+                            } else if (val.substring(i_val, i_val + ampms[1].length).toLowerCase() == ampms[1].toLowerCase()) {
                                 ampm = 'PM';
+                                returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "ampm", val, i_val, ampms[1].length, ampm);
+                                i_val += ampms[1].length;
                             } else {
                                 throw 'Invalid AM/PM';
                             }
-
-
-                         i_val +=2;
                         } else if (token == 'Z') {
                             parsedZ = true;
 
                             if (val[i_val] === "Z") {
                                 z = 0;
+
+                                returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "timezone", val, i_val, 1, z);
 
                                 i_val += 1;
                             } else {
@@ -282,11 +307,15 @@ angular.module('dateParser', [])
 
                                     z = (parseInt(tzStr.substr(0, 3), 10) * 60) + parseInt(tzStr.substr(4, 2), 10);
 
+                                    returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "timezone", val, i_val, 6, z);
+
                                     i_val += 6;
                                 } else {
                                     var tzStr = val.substring(i_val, i_val + 5);
 
                                     z = (parseInt(tzStr.substr(0, 3), 10) * 60) + parseInt(tzStr.substr(3, 2), 10);
+
+                                    returnParsingInfo && dateParserHelpers.setParsingInfo(parsingInfo, "timezone", val, i_val, 5, z);
 
                                     i_val += 5;
                                 }
@@ -349,14 +378,18 @@ angular.module('dateParser', [])
                     }
 
                     var localDate = new Date(year, month - 1, date, hh, mm, ss);
+                    var res;
                     if (parsedZ) {
-                        return new Date(localDate.getTime() - (z + localDate.getTimezoneOffset()) * 60 * 1000);
+                        res  = new Date(localDate.getTime() - (z + localDate.getTimezoneOffset()) * 60 * 1000);
                     } else {
-                        return localDate;
+                        res = localDate;
                     }
+                    if (returnParsingInfo) {
+                        return {input: val, date: res, parsingInfo: parsingInfo};
+                    }
+                    return res;
                 } catch(e) {
-                    // TODO: Return undefined?
-                    return new Date(undefined);
+                    return undefined;
                 }
             };
 
